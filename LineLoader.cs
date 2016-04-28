@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace codeLine
@@ -21,6 +22,12 @@ namespace codeLine
         public int LoadData() {
             while (true)
             {
+                // 放慢加载速度如果加载太多，防止内存爆掉
+                while (FileLinesManager.Instance.IsToMuchData())
+                {
+                    Thread.Sleep(1);
+                }
+
                 // 完成加载代码行
                 if (!Program.TryDequeue(out m_strCurrentPath))
 	            {

@@ -14,6 +14,7 @@ namespace codeLine
     {
         static Thread s_threadLoad;                            // 加载线程
         static List<Thread> s_lstCounterThread = new List<Thread>();        // 计数线程
+        const int MaxFileNameStore = 100;
 
         // 所有的文件名
         static ConcurrentQueue<string> s_fileQueue = new ConcurrentQueue<string>();
@@ -87,6 +88,7 @@ namespace codeLine
         }
 
         static void StartCounterThread() {
+            // 多少个计数线程
             int nWorker = Math.Max(1, Environment.ProcessorCount - 2);
             for (int i = 0; i < nWorker; i++)
 			{
@@ -99,7 +101,7 @@ namespace codeLine
                     watch.Start();
                     lineCounter.ProcessFile();
                     watch.Stop();
-                    //Console.WriteLine("counter" + nIndex + "线程终止" + watch.ElapsedMilliseconds);
+                    Console.WriteLine("counter" + nIndex + "线程终止" + watch.ElapsedMilliseconds);
                 }));
 
                 s_lstCounterThread.Add(threadCounter);
@@ -110,6 +112,12 @@ namespace codeLine
         // 加载并打印文件目录
         static void FetchDirFiles(string strPath, string strFront) {
             //Console.WriteLine(strFront + "-" + strPath);
+
+            // 防止加载太多内存占用
+            while (s_fileQueue.Count > MaxFileNameStore)
+            {
+                Thread.Sleep(1);
+            }
 
             string strChildFont = strFront + "  ";
 
