@@ -92,8 +92,8 @@ namespace codeLine
             // 还没开始多行注释
             if (!m_bBeginComment)
             {
-                int nIndexCStyle = strLine.IndexOf("/*");
-                int nIndexCppStyle = strLine.IndexOf("//");
+                int nIndexCStyle = IndexOfCStyleCommnetBegin(strLine, "/*");
+                int nIndexCppStyle = IndexOfCStyleCommnetBegin(strLine, "//");
 
                 //  “//” 这种类型的注释
                 if ((nIndexCppStyle >= 0 && nIndexCStyle >=0 && nIndexCppStyle < nIndexCStyle)
@@ -141,6 +141,65 @@ namespace codeLine
             }
 
             return strLine;
+        }
+
+        
+        // 查找出开始注释的index
+        int IndexOfCStyleCommnetBegin(string strSource, string strTarget, int nStartIndex = 0)
+        {
+            int indexCommnetBegin = strSource.IndexOf(strTarget, nStartIndex);
+            // 没找到，返回
+            if (indexCommnetBegin < 0)
+            {
+                return indexCommnetBegin;
+            }
+
+            // 找到了，但是在字符串中，从之后的子句中继续查找
+            if (IsCommnetInString(strSource, indexCommnetBegin))
+            {
+                return IndexOfCStyleCommnetBegin(strSource, strTarget, indexCommnetBegin + 2);
+            }
+            else {
+                // 找到了，而且不在字符串中
+                return indexCommnetBegin;
+            }
+        }
+
+        // 注释是否在字符串里面
+        bool IsCommnetInString(string strSource, int indexComment) {
+            List<int> lstQuoteIndex = GetAllQuoteIndexs(strSource);
+            for (int i = 0; i < lstQuoteIndex.Count; i++)
+            {
+                if (indexComment < lstQuoteIndex[i])
+                {
+                    return (i % 2) == 1;
+                }
+            }
+
+            return false;
+        }
+
+        // 获得所有没有转译的引号
+        List<int> GetAllQuoteIndexs(string strSource) {
+            List<int> lstIndex = new List<int>();
+            int index = -1;
+            while ((index = IndexOfQuote(strSource, index + 1)) >= 0)
+            {
+                lstIndex.Add(index);
+            }
+
+            return lstIndex;
+        }
+
+        // 查找出没有转译的引号
+        int IndexOfQuote(string strSource, int nStart)
+        {
+            int nIndexQuote = strSource.IndexOf("\"", nStart);
+            if (nIndexQuote > 0 && strSource[nIndexQuote - 1] == '\\')
+            {
+                return IndexOfQuote(strSource, nIndexQuote + 1);
+            }
+            return nIndexQuote;
         }
     }
 }
